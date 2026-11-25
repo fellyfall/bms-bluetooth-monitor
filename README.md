@@ -6,7 +6,7 @@ The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and 
 
 ## Live example
 
-View a live example dashboard: [Battery dashboard](http://glockenhof.asuscomm.com:3500/). The link uses HTTP; security, access controls, and availability of this independently hosted system are managed by its owner.
+The linked dashboard is a feasibility study and an example setup using an ECO-WORTHY 100 Ah LiFePO4 battery, not a production service. View it at [Battery dashboard](http://glockenhof.asuscomm.com:3500/). The link uses HTTP; security, access controls, and availability of this independently hosted system are managed by its owner.
 
 ## Features
 
