@@ -93,13 +93,17 @@ class ConfigTests(unittest.TestCase):
 
         self.assertEqual(config.language, "es")
 
-    def test_loads_klingon_dashboard_language(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_path = Path(temp_dir) / "config.toml"
-            config_path.write_text('[bms]\nlanguage = "tlh"\n', encoding="utf-8")
-            config = load_config(config_path)
+    def test_loads_added_dashboard_languages(self):
+        for language in ("tlh", "la", "eo", "de-x-ruhrpott"):
+            with self.subTest(language=language):
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    config_path = Path(temp_dir) / "config.toml"
+                    config_path.write_text(
+                        f'[bms]\nlanguage = "{language}"\n', encoding="utf-8"
+                    )
+                    config = load_config(config_path)
 
-        self.assertEqual(config.language, "tlh")
+                self.assertEqual(config.language, language)
 
     def test_rejects_unsupported_dashboard_language(self):
         with tempfile.TemporaryDirectory() as temp_dir:

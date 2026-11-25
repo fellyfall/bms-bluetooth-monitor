@@ -22,5 +22,17 @@
   "tlh": {
     "name": "tlhIngan Hol (experimental)",
     "locale": "en-US"
+  },
+  "la": {
+    "name": "Latina",
+    "locale": "la"
+  },
+  "eo": {
+    "name": "Esperanto",
+    "locale": "eo"
+  },
+  "de-x-ruhrpott": {
+    "name": "Ruhrpottdeutsch (inoffiziell)",
+    "locale": "de-DE"
   }
 }

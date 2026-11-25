@@ -40,7 +40,7 @@ language = "en"
 
 Replace the example address with your BMS Bluetooth address. On Windows, copy the file with `Copy-Item config.example.toml config.toml`; on Linux, use `cp config.example.toml config.toml`. `config.toml` is ignored by Git, so your address is not included in commits or release archives. The start scripts use the configured address and prompt only when it is blank; an address entered at the prompt is saved to `config.toml` for the next start. The `BATTERY_ADDRESS` environment variable, when set, takes precedence over the file and is not saved.
 
-The dashboard supports English (`en`), German (`de`), Spanish (`es`), Russian (`ru`), Simplified Chinese (`zh-CN`), and experimental Klingon (`tlh`). `bms.language` sets the default language; English is used by default. A visitor's selection is remembered in that browser and does not change the server configuration.
+The dashboard supports English (`en`), German (`de`), Spanish (`es`), Russian (`ru`), Simplified Chinese (`zh-CN`), experimental Klingon (`tlh`), Latin (`la`), Esperanto (`eo`), and unofficial Ruhrpott German (`de-x-ruhrpott`). `bms.language` sets the default language; English is used by default. A visitor's selection is remembered in that browser and does not change the server configuration.
 
 To add a language, copy `locales/en.json` to a new file such as `locales/fr.json` and translate its values without changing the keys or placeholders. Then add the language code, display name, and locale to `locales/languages.json`. The dashboard loads translations from these files; no dashboard logic changes are needed. The test suite checks that every language file contains the same keys as English.
 
