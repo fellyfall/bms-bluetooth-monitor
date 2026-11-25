@@ -4,10 +4,19 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from server_dashboard import app
+from server_dashboard import app, config
 
 
 class DashboardApiTests(unittest.TestCase):
+    def test_settings_api_returns_configured_default_language(self):
+        response = app.test_client().get("/api/settings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.get_json(),
+            {"default_language": config.language},
+        )
+
     def test_api_returns_a_series_for_each_cell_column(self):
         headers = [
             "Zeitstempel", "Status", "Spannung_V", "Strom_A", "Leistung_W",

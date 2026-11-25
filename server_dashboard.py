@@ -43,6 +43,10 @@ def index():
 def static_files(filename):
     return send_from_directory(os.path.dirname(os.path.abspath(__file__)), filename)
 
+@app.route("/api/settings")
+def api_settings():
+    return jsonify({"default_language": config.language})
+
 @app.route("/api/data")
 def api_data():
     df = load_all_logs()

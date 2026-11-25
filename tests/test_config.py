@@ -15,6 +15,7 @@ class ConfigTests(unittest.TestCase):
 
         self.assertEqual(config.driver, "ecoworthy")
         self.assertEqual(config.interval_seconds, 60)
+        self.assertEqual(config.language, "en")
         self.assertIsNone(config.address)
 
     def test_environment_address_overrides_local_settings(self):
@@ -47,6 +48,21 @@ class ConfigTests(unittest.TestCase):
             config_path = Path(temp_dir) / "config.toml"
             config_path.write_text("[bms]\naddress = 123\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "bms.address must be a string"):
+                load_config(config_path)
+
+    def test_loads_supported_dashboard_language(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            config_path.write_text('[bms]\nlanguage = "es"\n', encoding="utf-8")
+            config = load_config(config_path)
+
+        self.assertEqual(config.language, "es")
+
+    def test_rejects_unsupported_dashboard_language(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            config_path.write_text('[bms]\nlanguage = "fr"\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "bms.language"):
                 load_config(config_path)
 
     def test_rejects_non_positive_interval(self):

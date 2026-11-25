@@ -4,3 +4,5 @@ driver = "ecoworthy"
 interval_seconds = 60
 # Optional Bluetooth MAC address. Leave blank to enter it when starting.
 address = ""
+# Default dashboard language. The browser can override and remember its selection.
+language = "en"
