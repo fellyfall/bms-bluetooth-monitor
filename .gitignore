@@ -7,3 +7,5 @@ venv/
 *.log
 battery_log*.csv
 lifepo4-bms-monitor-v*.zip
+bms-bluetooth-monitor-v*.zip
+dist/
