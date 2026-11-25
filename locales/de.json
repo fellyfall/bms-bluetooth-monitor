@@ -35,5 +35,7 @@
   "discharging": "Entlädt",
   "idle": "Ruhe",
   "remainingEta": "Noch ca. {hours} h",
-  "fullEta": "Voll in ca. {hours} h"
+  "fullEta": "Voll in ca. {hours} h",
+  "versionInfo": "Version {version} · Revision {revision}",
+  "releases": "Versionen"
 }

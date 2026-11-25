@@ -109,6 +109,8 @@ The Flask server listens on port `5000` and serves the dashboard at `/`. The `/a
 
 By default, the server binds to `0.0.0.0`, making it reachable from other devices on the local network. It has no authentication or TLS. Use it only on a trusted network; do not expose port `5000` directly to the public internet.
 
+Release installations show their version and short Git revision in the dashboard footer. The **Releases** link opens the download page for manual updates; the dashboard does not update itself or modify local configuration and measurement files.
+
 ## Creating a release
 
 Pushing a version tag such as `v0.3` from the intended release commit starts the GitHub Actions release workflow. It packages the committed files from that tagged commit and attaches the ZIP archive to a GitHub release with automatically generated release notes. To publish a release, create and push the tag:

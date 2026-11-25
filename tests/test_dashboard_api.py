@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from config import load_languages
-from server_dashboard import app, config
+from server_dashboard import VERSION_INFO, app, config
 
 
 class DashboardApiTests(unittest.TestCase):
@@ -18,6 +18,7 @@ class DashboardApiTests(unittest.TestCase):
             {
                 "default_language": config.language,
                 "languages": load_languages(),
+                "version": VERSION_INFO,
             },
         )
         self.assertIn("en", response.get_json()["languages"])

@@ -39,6 +39,9 @@
     .kpi-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
     .kpi-val { font-size: 1.3rem; font-weight: 700; }
     .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 12px; }
+    .app-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 0.75rem; }
+    .app-footer a { color: var(--muted); text-decoration: none; }
+    .app-footer a:hover { color: var(--cyan); }
   </style>
 </head>
 <body>
@@ -72,11 +75,17 @@
   <div class="chart-box"><div id="chartPower" style="height:210px;"></div></div>
   <div class="chart-box"><div id="chartCells" style="height:230px;"></div></div>
 
+  <footer class="app-footer">
+    <span id="versionInfo">Version: development</span>
+    <a id="releasesLink" href="https://github.com/fellyfall/bms-bluetooth-monitor/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+  </footer>
+
   <script>
     let customStart = null;
     let customEnd = null;
     let initialized = false;
     let currentLanguage = "en";
+    let releaseInfo = { version: "development", revision: "unpackaged" };
 
     let languages = {};
     let translations = {};
@@ -117,6 +126,10 @@
       document.getElementById("lastUpdate").textContent = translate("connecting");
       document.getElementById("resBadge").textContent =
         translate("resolutionLabel").replace("{value}", translate("resolutionUnknown"));
+      document.getElementById("versionInfo").textContent = translate("versionInfo")
+        .replace("{version}", releaseInfo.version)
+        .replace("{revision}", releaseInfo.revision);
+      document.getElementById("releasesLink").textContent = translate("releases");
     }
 
     async function loadTranslation(language) {
@@ -274,6 +287,7 @@
       }
       const settings = await response.json();
       languages = settings.languages;
+      releaseInfo = settings.version;
       Object.entries(languages).forEach(([code, details]) => {
         const option = document.createElement("option");
         option.value = code;

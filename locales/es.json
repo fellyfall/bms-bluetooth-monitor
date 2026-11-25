@@ -35,5 +35,7 @@
   "discharging": "Descargando",
   "idle": "En reposo",
   "remainingEta": "~{hours} h restantes",
-  "fullEta": "Carga completa en ~{hours} h"
+  "fullEta": "Carga completa en ~{hours} h",
+  "versionInfo": "Versión {version} · revisión {revision}",
+  "releases": "Versiones"
 }

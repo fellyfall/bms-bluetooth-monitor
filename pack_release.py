@@ -3,6 +3,7 @@
 
 import argparse
 import io
+import json
 import re
 import subprocess
 import tarfile
@@ -50,6 +51,12 @@ def main() -> None:
         check=True,
         stdout=subprocess.PIPE,
     ).stdout
+    revision = subprocess.run(
+        ["git", "rev-parse", "--short=12", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
     prefix = f"bms-bluetooth-monitor-{args.version}/"
     output_dir = Path("dist")
     output_dir.mkdir(exist_ok=True)
@@ -69,6 +76,15 @@ def main() -> None:
                 info.compress_type = zipfile.ZIP_DEFLATED
                 info.external_attr = (member.mode & 0xFFFF) << 16
                 package.writestr(info, fileobj.read())
+            package.writestr(
+                prefix + "version.json",
+                json.dumps(
+                    {"version": args.version, "revision": revision},
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n",
+            )
 
     print(f"Created {output_path}")
 

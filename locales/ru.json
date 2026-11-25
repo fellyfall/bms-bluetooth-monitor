@@ -35,5 +35,7 @@
   "discharging": "Разряд",
   "idle": "Покой",
   "remainingEta": "Осталось ~{hours} ч",
-  "fullEta": "До полного заряда ~{hours} ч"
+  "fullEta": "До полного заряда ~{hours} ч",
+  "versionInfo": "Версия {version} · ревизия {revision}",
+  "releases": "Релизы"
 }

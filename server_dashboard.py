@@ -1,5 +1,8 @@
+import json
 import os
 import re
+from pathlib import Path
+
 import pandas as pd
 from flask import Flask, jsonify, request, send_from_directory
 
@@ -10,7 +13,29 @@ from log_files import find_log_files
 app = Flask(__name__)
 config = load_config()
 create_driver(config.driver)
+VERSION_INFO_PATH = Path(__file__).with_name("version.json")
 CELL_COLUMN_PATTERN = re.compile(r"^Zelle(\d+)_V$")
+
+
+def load_version_info():
+    if not VERSION_INFO_PATH.exists():
+        return {"version": "development", "revision": "unpackaged"}
+    try:
+        version_info = json.loads(VERSION_INFO_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"Unable to load version metadata: {error}") from error
+    if (
+        not isinstance(version_info, dict)
+        or not isinstance(version_info.get("version"), str)
+        or not version_info["version"].strip()
+        or not isinstance(version_info.get("revision"), str)
+        or not version_info["revision"].strip()
+    ):
+        raise ValueError("version.json must contain version and revision strings.")
+    return version_info
+
+
+VERSION_INFO = load_version_info()
 
 def load_all_logs():
     files = find_log_files(config.driver)
@@ -48,6 +73,7 @@ def api_settings():
     return jsonify({
         "default_language": config.language,
         "languages": load_languages(),
+        "version": VERSION_INFO,
     })
 
 @app.route("/api/data")

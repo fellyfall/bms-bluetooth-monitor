@@ -35,5 +35,7 @@
   "discharging": "放电中",
   "idle": "静置",
   "remainingEta": "剩余约 {hours} 小时",
-  "fullEta": "约 {hours} 小时后充满"
+  "fullEta": "约 {hours} 小时后充满",
+  "versionInfo": "版本 {version} · 修订版 {revision}",
+  "releases": "版本发布"
 }

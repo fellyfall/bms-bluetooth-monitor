@@ -35,5 +35,7 @@
   "discharging": "Discharging",
   "idle": "Idle",
   "remainingEta": "~{hours} h remaining",
-  "fullEta": "Full in ~{hours} h"
+  "fullEta": "Full in ~{hours} h",
+  "versionInfo": "Version {version} · revision {revision}",
+  "releases": "Releases"
 }
