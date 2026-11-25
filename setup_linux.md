@@ -46,7 +46,7 @@ chmod +x start.sh
 ./start.sh
 ```
 
-Beim Start fragt das Skript nach der Bluetooth-MAC-Adresse des BMS. Alternativ kannst du sie vorher setzen:
+Wenn in `config.toml` keine Adresse eingetragen ist, fragt das Skript beim Start nach der Bluetooth-MAC-Adresse des BMS und speichert sie für den nächsten Start in `config.toml`. Alternativ kannst du die Adresse vorher über `BATTERY_ADDRESS` setzen:
 
 ```bash
 export BATTERY_ADDRESS="AA:BB:CC:DD:EE:FF"

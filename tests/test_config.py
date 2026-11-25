@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from config import load_config
+from config import load_config, save_address
 
 
 class ConfigTests(unittest.TestCase):
@@ -42,6 +42,41 @@ class ConfigTests(unittest.TestCase):
                 config = load_config(config_path)
 
         self.assertEqual(config.address, "11:22:33:44:55:66")
+
+    def test_save_address_creates_config_when_missing(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            save_address("AA:BB:CC:DD:EE:FF", config_path)
+            with patch.dict(os.environ, {"BMS_DRIVER": "", "BATTERY_ADDRESS": ""}):
+                config = load_config(config_path)
+
+        self.assertEqual(config.address, "AA:BB:CC:DD:EE:FF")
+
+    def test_save_address_preserves_other_config_values_and_comments(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            config_path.write_text(
+                '[bms]\n# Keep this setting\n'
+                'driver = "ecoworthy"\naddress = "" # BMS address\n'
+                'language = "de"\n',
+                encoding="utf-8",
+            )
+            save_address("AA:BB:CC:DD:EE:FF", config_path)
+            saved_config = config_path.read_text(encoding="utf-8")
+            with patch.dict(os.environ, {"BMS_DRIVER": "", "BATTERY_ADDRESS": ""}):
+                config = load_config(config_path)
+
+        self.assertIn("# Keep this setting", saved_config)
+        self.assertIn("# BMS address", saved_config)
+        self.assertEqual(config.address, "AA:BB:CC:DD:EE:FF")
+        self.assertEqual(config.language, "de")
+
+    def test_save_address_rejects_empty_address(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            with self.assertRaisesRegex(ValueError, "must not be empty"):
+                save_address("  ", config_path)
+            self.assertFalse(config_path.exists())
 
     def test_rejects_non_string_address(self):
         with tempfile.TemporaryDirectory() as temp_dir:

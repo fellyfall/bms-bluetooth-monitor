@@ -9,6 +9,13 @@ if [ -z "${BATTERY_ADDRESS:-}" ]; then
 fi
 if [ -z "${BATTERY_ADDRESS:-}" ]; then
     read -r -p "Bluetooth-MAC-Adresse des BMS: " BATTERY_ADDRESS
+    if [ -n "$BATTERY_ADDRESS" ]; then
+        python3 config.py --save-address "$BATTERY_ADDRESS" || {
+            echo "Fehler: Die Bluetooth-Adresse konnte nicht in config.toml gespeichert werden." >&2
+            exit 1
+        }
+        echo "Bluetooth-Adresse in config.toml gespeichert."
+    fi
 fi
 if [ -z "${BATTERY_ADDRESS:-}" ]; then
     echo "Fehler: Es wurde keine Bluetooth-Adresse eingegeben." >&2

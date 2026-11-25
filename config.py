@@ -1,5 +1,7 @@
+import argparse
 import json
 import os
+import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -86,5 +88,82 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> MonitorConfig:
     )
 
 
+def save_address(address: str, path: Path = DEFAULT_CONFIG_PATH) -> None:
+    address = address.strip()
+    if not address:
+        raise ValueError("The BMS address must not be empty.")
+
+    content = path.read_text(encoding="utf-8") if path.exists() else ""
+    lines = content.splitlines(keepends=True)
+    newline = "\r\n" if "\r\n" in content else "\n"
+    section_start = next(
+        (
+            index
+            for index, line in enumerate(lines)
+            if line.split("#", 1)[0].strip() == "[bms]"
+        ),
+        None,
+    )
+    serialized_address = json.dumps(address)
+
+    if section_start is None:
+        if content and not content.endswith(("\n", "\r")):
+            lines.append(newline)
+        if content and not content.endswith(("\n\n", "\r\n\r\n")):
+            lines.append(newline)
+        lines.extend(["[bms]", newline, f"address = {serialized_address}", newline])
+    else:
+        section_end = len(lines)
+        for index in range(section_start + 1, len(lines)):
+            header = lines[index].split("#", 1)[0].strip()
+            if header.startswith("[") and header.endswith("]"):
+                section_end = index
+                break
+
+        address_index = next(
+            (
+                index
+                for index in range(section_start + 1, section_end)
+                if re.match(
+                    r"""^\s*(?:address|"address"|'address')\s*=""",
+                    lines[index].split("#", 1)[0],
+                )
+            ),
+            None,
+        )
+        if address_index is None:
+            if section_end > section_start and not lines[section_end - 1].endswith(
+                ("\n", "\r")
+            ):
+                lines[section_end - 1] += newline
+            lines[section_end:section_end] = [
+                f"address = {serialized_address}",
+                newline,
+            ]
+        else:
+            line = lines[address_index]
+            body = line.rstrip("\r\n")
+            line_ending = line[len(body) :] or newline
+            prefix = re.match(r"^\s*", body).group()
+            comment = body.partition("#")[2]
+            suffix = f"  #{comment}" if "#" in body else ""
+            lines[address_index] = (
+                f"{prefix}address = {serialized_address}{suffix}{line_ending}"
+            )
+
+    updated_content = "".join(lines)
+    parsed = tomllib.loads(updated_content)
+    bms_config = parsed.get("bms")
+    if not isinstance(bms_config, dict) or bms_config.get("address") != address:
+        raise ValueError("Unable to save the BMS address in the [bms] section.")
+    path.write_text(updated_content, encoding="utf-8")
+
+
 if __name__ == "__main__":
-    print(load_config().address or "")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save-address")
+    args = parser.parse_args()
+    if args.save_address is None:
+        print(load_config().address or "")
+    else:
+        save_address(args.save_address)
