@@ -1,4 +1,5 @@
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -23,6 +24,12 @@ class LocaleFileTests(unittest.TestCase):
                         for value in translations.values()
                     )
                 )
+                for key, english_value in english.items():
+                    self.assertEqual(
+                        set(re.findall(r"\{(\w+)\}", translations[key])),
+                        set(re.findall(r"\{(\w+)\}", english_value)),
+                        f"Placeholder mismatch for {key} in {code}",
+                    )
 
 
 if __name__ == "__main__":

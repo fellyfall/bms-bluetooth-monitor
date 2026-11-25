@@ -18,5 +18,9 @@
   "zh-CN": {
     "name": "简体中文",
     "locale": "zh-CN"
+  },
+  "tlh": {
+    "name": "tlhIngan Hol (experimental)",
+    "locale": "en-US"
   }
 }

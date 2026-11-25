@@ -93,6 +93,14 @@ class ConfigTests(unittest.TestCase):
 
         self.assertEqual(config.language, "es")
 
+    def test_loads_klingon_dashboard_language(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.toml"
+            config_path.write_text('[bms]\nlanguage = "tlh"\n', encoding="utf-8")
+            config = load_config(config_path)
+
+        self.assertEqual(config.language, "tlh")
+
     def test_rejects_unsupported_dashboard_language(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = Path(temp_dir) / "config.toml"
