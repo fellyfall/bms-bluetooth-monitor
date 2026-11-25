@@ -1,0 +1,4 @@
+[bms]
+# Select a driver registered in bms_drivers.
+driver = "ecoworthy"
+interval_seconds = 60

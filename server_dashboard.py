@@ -1,13 +1,19 @@
-import glob
 import os
+import re
 import pandas as pd
 from flask import Flask, jsonify, request, send_from_directory
 
+from bms_drivers import create_driver
+from config import load_config
+from log_files import find_log_files
+
 app = Flask(__name__)
-LOG_PATTERN = "battery_log*.csv"
+config = load_config()
+create_driver(config.driver)
+CELL_COLUMN_PATTERN = re.compile(r"^Zelle(\d+)_V$")
 
 def load_all_logs():
-    files = sorted(glob.glob(LOG_PATTERN))
+    files = find_log_files(config.driver)
     if not files:
         return pd.DataFrame()
     dfs = []
@@ -24,6 +30,10 @@ def load_all_logs():
     df["Zeitstempel"] = pd.to_datetime(df["Zeitstempel"], errors="coerce")
     df = df.dropna(subset=["Zeitstempel"]).sort_values("Zeitstempel").drop_duplicates("Zeitstempel")
     return df
+
+def cell_column_number(column):
+    match = CELL_COLUMN_PATTERN.fullmatch(column)
+    return int(match.group(1)) if match else -1
 
 @app.route("/")
 def index():
@@ -89,6 +99,10 @@ def api_data():
 
     # NaN-Werte sauber für JSON ersetzen
     df = df.fillna(0)
+    cell_columns = sorted(
+        (column for column in df.columns if CELL_COLUMN_PATTERN.fullmatch(column)),
+        key=cell_column_number,
+    )
 
     return jsonify({
         "empty": False,
@@ -98,6 +112,13 @@ def api_data():
         "kapazitaet": df["Restkapazitaet_Ah"].round(2).tolist(),
         "spannung": df["Spannung_V"].round(2).tolist(),
         "leistung": df["Leistung_W"].round(1).tolist(),
+        "cells": [
+            {
+                "name": f"Cell {cell_column_number(column)}",
+                "values": df[column].round(3).tolist(),
+            }
+            for column in cell_columns
+        ],
         "z1": df["Zelle1_V"].round(3).tolist() if "Zelle1_V" in df else [],
         "z2": df["Zelle2_V"].round(3).tolist() if "Zelle2_V" in df else [],
         "z3": df["Zelle3_V"].round(3).tolist() if "Zelle3_V" in df else [],

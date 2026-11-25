@@ -6,9 +6,9 @@ The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and 
 
 ## Features
 
-- Reads pack voltage, current, state of charge, remaining capacity, temperature, and up to four cell voltages over BLE.
+- Reads pack voltage, current, state of charge, remaining capacity, temperature, and cell voltages over BLE.
 - Calculates power and cell-voltage drift.
-- Writes timestamped measurements to monthly `battery_log_YYYY-MM.csv` files.
+- Writes timestamped measurements to monthly, driver-specific CSV files.
 - Serves a local web dashboard with live status cards, interactive charts, and time-range filters.
 - Provides a separate Matplotlib desktop plotter.
 - Bundles Plotly.js locally so the web dashboard does not need to download the chart library at runtime.
@@ -16,11 +16,25 @@ The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and 
 
 ## Requirements
 
-- Python 3.11 or newer is recommended.
+- Python 3.11 or newer is required.
 - A Bluetooth adapter and a supported BMS in BLE range are required for live measurements.
 - The web dashboard can also display existing CSV logs without a connected BMS.
 
 Python packages are listed in [`requirements.txt`](requirements.txt): `bleak`, `flask`, `pandas`, and `matplotlib`.
+
+## BMS drivers
+
+The BLE protocol is isolated in `bms_drivers/`; `monitor.py` and the dashboards consume a common `BatteryReading` format. To select a driver, copy [`config.example.toml`](config.example.toml) to a local `config.toml` and edit it:
+
+```toml
+[bms]
+driver = "ecoworthy"
+interval_seconds = 60
+```
+
+On Windows, copy it with `Copy-Item config.example.toml config.toml`; on Linux, use `cp config.example.toml config.toml`. `config.toml` is ignored by Git. The start scripts still ask for the Bluetooth address; it can also be supplied through the `BATTERY_ADDRESS` environment variable.
+
+To add another BMS, implement the `BmsDriver` interface in a new module under `bms_drivers/` and register it in `bms_drivers/__init__.py`. Implement `initialize(client)` for BLE setup and `read(client)` to return the shared `BatteryReading` model, including its cell-voltage list. The logger, API, web chart, and desktop plotter handle a variable number of cells. At present, only the ECO-WORTHY driver is implemented and hardware-tested; a new driver still needs protocol details and testing with the target BMS.
 
 ## Install and run
 

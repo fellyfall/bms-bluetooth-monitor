@@ -1,22 +1,28 @@
-import glob
+import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.animation import FuncAnimation
 
-LOG_PATTERN = "battery_log*.csv"
+from bms_drivers import create_driver
+from config import load_config
+from log_files import find_log_files
+
+config = load_config()
+create_driver(config.driver)
 UPDATE_INTERVAL_MS = 10000
+CELL_COLUMN_PATTERN = re.compile(r"^Zelle(\d+)_V$")
 
 plt.style.use("dark_background")
 fig, axes = plt.subplots(4, 1, figsize=(12, 9), sharex=True)
-fig.canvas.manager.set_window_title("ECO-WORTHY 100Ah - Langzeit- & Live-Monitor")
+fig.canvas.manager.set_window_title(f"{config.driver} BMS - Live Monitor")
 
 status_banner = fig.suptitle(
     "Lade Log-Daten...", fontsize=11, fontweight="bold", color="#00e5ff"
 )
 
 def load_all_logs():
-    files = sorted(glob.glob(LOG_PATTERN))
+    files = find_log_files(config.driver)
     if not files:
         return pd.DataFrame()
     dfs = []
@@ -101,13 +107,16 @@ def update(frame):
     axes[2].set_ylabel("Leistung (W)", color="#ff5252")
     axes[2].legend(loc="upper left")
 
-    colors = ["#69f0ae", "#40c4ff", "#ea80fc", "#ffab40"]
-    for i in range(1, 5):
-        col = f"Zelle{i}_V"
-        if col in df.columns:
-            axes[3].plot(t, df[col], color=colors[i - 1], linewidth=1.5, label=f"Zelle {i}")
+    colors = ["#69f0ae", "#40c4ff", "#ea80fc", "#ffab40", "#00e5ff", "#ffd54f"]
+    cell_columns = sorted(
+        (col for col in df.columns if CELL_COLUMN_PATTERN.fullmatch(col)),
+        key=lambda col: int(CELL_COLUMN_PATTERN.fullmatch(col).group(1)),
+    )
+    for i, col in enumerate(cell_columns):
+        axes[3].plot(t, df[col], color=colors[i % len(colors)], linewidth=1.5, label=f"Cell {i + 1}")
     axes[3].set_ylabel("Zellen (V)")
-    axes[3].legend(loc="upper left", ncol=4)
+    if cell_columns:
+        axes[3].legend(loc="upper left", ncol=min(4, len(cell_columns)))
 
     axes[3].xaxis.set_major_formatter(mdates.DateFormatter(date_fmt))
     fig.autofmt_xdate()

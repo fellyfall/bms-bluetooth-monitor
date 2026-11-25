@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ECO-WORTHY 100Ah Live-Monitor</title>
+  <title>BMS Bluetooth Monitor</title>
   <script src="/plotly.min.js"></script>
   <style>
     :root {
@@ -39,7 +39,7 @@
 <body>
   <header>
     <div>
-      <h1>ECO-WORTHY 100Ah &mdash; Web-Monitor</h1>
+      <h1>BMS Bluetooth &mdash; Web Monitor</h1>
       <div id="lastUpdate" style="font-size:0.8rem; color:var(--muted);">Verbinde mit Backend...</div>
     </div>
     <div class="controls">
@@ -127,12 +127,14 @@
       Plotly.react("chartCap", [{ x: t, y: data.kapazitaet, name: "Restkapazität (Ah)", line: { color: "#00e5ff", width: 2 } }], baseLayout("Kapazität (Ah)"), plotConfig);
       Plotly.react("chartVolt", [{ x: t, y: data.spannung, name: "Gesamtspannung (V)", line: { color: "#ffd54f", width: 2 } }], baseLayout("Spannung (V)"), plotConfig);
       Plotly.react("chartPower", [{ x: t, y: data.leistung, name: "Leistung (W)", line: { color: "#ff5252", width: 2 } }], baseLayout("Leistung (W)"), plotConfig);
-      Plotly.react("chartCells", [
-        { x: t, y: data.z1, name: "Zelle 1", line: { color: "#69f0ae", width: 1.5 } },
-        { x: t, y: data.z2, name: "Zelle 2", line: { color: "#40c4ff", width: 1.5 } },
-        { x: t, y: data.z3, name: "Zelle 3", line: { color: "#ea80fc", width: 1.5 } },
-        { x: t, y: data.z4, name: "Zelle 4", line: { color: "#ffab40", width: 1.5 } }
-      ], baseLayout("Zellen (V)"), plotConfig);
+      const cellColors = ["#69f0ae", "#40c4ff", "#ea80fc", "#ffab40", "#00e5ff", "#ffd54f"];
+      const cellTraces = (data.cells || []).map((cell, index) => ({
+        x: t,
+        y: cell.values,
+        name: cell.name,
+        line: { color: cellColors[index % cellColors.length], width: 1.5 }
+      }));
+      Plotly.react("chartCells", cellTraces, baseLayout("Cell voltage (V)"), plotConfig);
 
       // Zoom/Pan-Synchronisation zwischen allen 4 Diagrammen + dynamisches Nachladen
       if (!initialized) {
