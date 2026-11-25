@@ -34,9 +34,10 @@ The BLE protocol is isolated in `bms_drivers/`; `monitor.py` and the dashboards 
 [bms]
 driver = "ecoworthy"
 interval_seconds = 60
+address = "AA:BB:CC:DD:EE:FF"
 ```
 
-On Windows, copy it with `Copy-Item config.example.toml config.toml`; on Linux, use `cp config.example.toml config.toml`. `config.toml` is ignored by Git. The start scripts still ask for the Bluetooth address; it can also be supplied through the `BATTERY_ADDRESS` environment variable.
+Replace the example address with your BMS Bluetooth address. On Windows, copy the file with `Copy-Item config.example.toml config.toml`; on Linux, use `cp config.example.toml config.toml`. `config.toml` is ignored by Git, so your address is not included in commits or release archives. The start scripts use the configured address and prompt only when it is blank. The `BATTERY_ADDRESS` environment variable, when set, takes precedence over the file.
 
 To add another BMS, implement the `BmsDriver` interface in a new module under `bms_drivers/` and register it in `bms_drivers/__init__.py`. Implement `initialize(client)` for BLE setup and `read(client)` to return the shared `BatteryReading` model, including its cell-voltage list. The logger, API, web chart, and desktop plotter handle a variable number of cells. At present, only the ECO-WORTHY driver is implemented and hardware-tested; a new driver still needs protocol details and testing with the target BMS.
 
@@ -54,7 +55,7 @@ py -m venv .venv
 py -m pip install -r requirements.txt
 ```
 
-Run `start.bat`. It prompts for the BMS Bluetooth address, starts the BLE logger and web server, and opens the dashboard at <http://localhost:5000>.
+Run `start.bat`. It uses the address in `config.toml` (or prompts if none is set), starts the BLE logger and web server, and opens the dashboard at <http://localhost:5000>.
 
 ### Linux or Raspberry Pi
 
@@ -70,13 +71,13 @@ chmod +x start.sh
 ./start.sh
 ```
 
-`start.sh` prompts for the BMS Bluetooth address, starts the logger and dashboard, and opens a browser when a desktop environment is available. The dashboard is at <http://localhost:5000>.
+`start.sh` uses the address in `config.toml` (or prompts if none is set), starts the logger and dashboard, and opens a browser when a desktop environment is available. The dashboard is at <http://localhost:5000>.
 
 See [`setup_linux.md`](setup_linux.md) for Bluetooth permissions and optional `systemd` autostart instructions. The included service files use `/home/pi/battery-monitor` and the `pi` user by default; adjust them to match your installation. For `systemd`, set `BATTERY_ADDRESS` in `/etc/default/battery-monitor` as described in the setup guide.
 
 ## Configuration and individual programs
 
-The logger reads the BMS address from the `BATTERY_ADDRESS` environment variable. The start scripts ask for it interactively, so the address is not stored in the source code.
+The logger reads the BMS address from `config.toml` or the `BATTERY_ADDRESS` environment variable. The local configuration file is ignored by Git; keep it private and do not commit it.
 
 To run individual programs:
 

@@ -5,13 +5,16 @@
 cd "$(dirname "$0")"
 
 if [ -z "${BATTERY_ADDRESS:-}" ]; then
+    BATTERY_ADDRESS="$(python3 config.py)" || exit 1
+fi
+if [ -z "${BATTERY_ADDRESS:-}" ]; then
     read -r -p "Bluetooth-MAC-Adresse des BMS: " BATTERY_ADDRESS
-    export BATTERY_ADDRESS
 fi
 if [ -z "${BATTERY_ADDRESS:-}" ]; then
     echo "Fehler: Es wurde keine Bluetooth-Adresse eingegeben." >&2
     exit 1
 fi
+export BATTERY_ADDRESS
 
 echo "=== Starte Batterie-Monitoring (Linux) ==="
 

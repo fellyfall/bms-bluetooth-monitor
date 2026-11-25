@@ -39,7 +39,9 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> MonitorConfig:
     ):
         raise ValueError("bms.interval_seconds must be a positive integer.")
 
-    address = os.environ.get("BATTERY_ADDRESS")
+    address = os.environ.get("BATTERY_ADDRESS") or bms_config.get("address")
+    if address is not None and not isinstance(address, str):
+        raise ValueError("bms.address must be a string.")
     address = address.strip() if address and address.strip() else None
 
     return MonitorConfig(
@@ -47,3 +49,7 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> MonitorConfig:
         address=address,
         interval_seconds=interval_seconds,
     )
+
+
+if __name__ == "__main__":
+    print(load_config().address or "")
