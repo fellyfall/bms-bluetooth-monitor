@@ -4,6 +4,10 @@ A Bluetooth Low Energy (BLE) logger and dashboard for monitoring LiFePO4 battery
 
 The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and its Bluetooth BMS. Other BMS models may use a different BLE protocol; they have not been tested and may require code changes.
 
+## Live example
+
+View a live example dashboard: [Battery dashboard](http://glockenhof.asuscomm.com:3500/). The link uses HTTP; security, access controls, and availability of this independently hosted system are managed by its owner.
+
 ## Features
 
 - Reads pack voltage, current, state of charge, remaining capacity, temperature, and cell voltages over BLE.
