@@ -32,6 +32,8 @@ def should_include(path: str) -> bool:
         return False
     if name == "config.toml" or name == ".env" or name.startswith(".env."):
         return False
+    if name == "battery_monitor.sqlite3" or name.startswith("battery_monitor.sqlite3-"):
+        return False
     if name.startswith("battery_log") and name.endswith(".csv"):
         return False
     if name.endswith((".log", ".pyc", ".pyo", ".zip")):

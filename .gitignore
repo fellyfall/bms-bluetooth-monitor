@@ -6,6 +6,8 @@ __pycache__/
 venv/
 *.log
 battery_log*.csv
+battery_monitor.sqlite3*
+csv-export/
 lifepo4-bms-monitor-v*.zip
 bms-bluetooth-monitor-v*.zip
 dist/

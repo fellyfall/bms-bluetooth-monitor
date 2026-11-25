@@ -1,6 +1,6 @@
 # BMS Bluetooth Monitor
 
-A Bluetooth Low Energy (BLE) logger and dashboard for monitoring LiFePO4 battery management systems (BMS). The project reads battery telemetry, stores it locally as CSV, and presents it in either a web dashboard or a desktop plotting window.
+A Bluetooth Low Energy (BLE) logger and dashboard for monitoring LiFePO4 battery management systems (BMS). The project reads battery telemetry, stores it locally in SQLite, and presents it in either a web dashboard or a desktop plotting window. Existing CSV logs are imported automatically and can still be exported as CSV.
 
 The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and its Bluetooth BMS. Other BMS models may use a different BLE protocol; they have not been tested and may require code changes.
 
@@ -12,7 +12,9 @@ The linked dashboard is a feasibility study and an example setup using an ECO-WO
 
 - Reads pack voltage, current, state of charge, remaining capacity, temperature, and cell voltages over BLE.
 - Calculates power and cell-voltage drift.
-- Writes timestamped measurements to monthly, driver-specific CSV files.
+- Stores timestamped measurements and variable cell-voltage data in a local SQLite database.
+- Imports existing monthly CSV logs automatically without deleting or modifying them.
+- Exports database measurements back to monthly CSV files for compatibility and backup.
 - Serves a local web dashboard with live status cards, interactive charts, and time-range filters.
 - Provides a separate Matplotlib desktop plotter.
 - Bundles Plotly.js locally so the web dashboard does not need to download the chart library at runtime.
@@ -22,7 +24,7 @@ The linked dashboard is a feasibility study and an example setup using an ECO-WO
 
 - Python 3.11 or newer is required.
 - A Bluetooth adapter and a supported BMS in BLE range are required for live measurements.
-- The web dashboard can also display existing CSV logs without a connected BMS.
+- The web dashboard can display existing CSV logs without a connected BMS; they are imported into SQLite on first use.
 
 Python packages are listed in [`requirements.txt`](requirements.txt): `bleak`, `flask`, `pandas`, and `matplotlib`.
 
@@ -103,11 +105,13 @@ py monitor.py
 
 On Linux, use `export BATTERY_ADDRESS="AA:BB:CC:DD:EE:FF"` before running `python3 monitor.py`.
 
-The logger writes CSV files in its current working directory. Start the programs from the project directory so the logger, plotter, and dashboard use the same files.
+The logger stores measurements in `battery_monitor.sqlite3` in its current working directory. On startup, the logger, dashboard, and plotter check for matching legacy CSV files and import any new or changed files. Import metadata prevents unchanged files from being read again; original CSV files are never deleted. Start the programs from the project directory so they use the same database.
+
+To import CSV files manually, run `python database.py --import-csv` (or `python database.py --import-csv --driver jbd`). To export the database to monthly CSV files, run `python database.py --export-csv`; files are written to `csv-export/` by default. Choose another destination with `--output-dir`. Existing export files are not overwritten.
 
 ## Dashboard and API
 
-The Flask server listens on port `5000` and serves the dashboard at `/`. The `/api/data` endpoint returns the latest battery values and chart series. Optional `start` and `end` query parameters filter the time range; the API reduces the data resolution for longer ranges.
+The Flask server listens on port `5000` and serves the dashboard at `/`. The `/api/data` endpoint returns the latest battery values and chart series. Optional `start` and `end` query parameters filter the time range; SQLite applies the time filter and aggregates longer ranges before returning chart data.
 
 By default, the server binds to `0.0.0.0`, making it reachable from other devices on the local network. It has no authentication or TLS. Use it only on a trusted network; do not expose port `5000` directly to the public internet.
 
@@ -126,7 +130,7 @@ To build the archive locally for inspection, run `python pack_release.py v0.3` f
 
 ## Data and privacy
 
-Measurement logs contain timestamps and battery telemetry. They are kept locally and excluded from Git by `.gitignore`. Review your logs before sharing them publicly. Configure your own Bluetooth address locally; do not commit it to the repository.
+The SQLite database and its WAL files contain timestamps and battery telemetry. They are kept locally and excluded from Git and release archives. CSV logs and exports also contain this data. Review them before sharing publicly. Configure your own Bluetooth address locally; do not commit it to the repository.
 
 ## License
 

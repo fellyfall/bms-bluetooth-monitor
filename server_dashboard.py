@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from threading import Lock
 from pathlib import Path
 
 import pandas as pd
@@ -8,6 +9,7 @@ from flask import Flask, jsonify, request, send_from_directory
 
 from bms_drivers import create_driver
 from config import load_config, load_languages
+from database import BatteryDatabase, DATABASE_FILENAME, resolution_for_span
 from log_files import find_log_files
 
 app = Flask(__name__)
@@ -36,25 +38,16 @@ def load_version_info():
 
 
 VERSION_INFO = load_version_info()
+DATABASES = {}
+DATABASES_LOCK = Lock()
 
-def load_all_logs():
-    files = find_log_files(config.driver)
-    if not files:
-        return pd.DataFrame()
-    dfs = []
-    for f in files:
-        try:
-            temp_df = pd.read_csv(f, sep=";")
-            if not temp_df.empty:
-                dfs.append(temp_df)
-        except Exception:
-            pass
-    if not dfs:
-        return pd.DataFrame()
-    df = pd.concat(dfs, ignore_index=True)
-    df["Zeitstempel"] = pd.to_datetime(df["Zeitstempel"], errors="coerce")
-    df = df.dropna(subset=["Zeitstempel"]).sort_values("Zeitstempel").drop_duplicates("Zeitstempel")
-    return df
+
+def get_database():
+    path = (Path.cwd() / DATABASE_FILENAME).resolve()
+    with DATABASES_LOCK:
+        if path not in DATABASES:
+            DATABASES[path] = BatteryDatabase(path)
+        return DATABASES[path]
 
 def cell_column_number(column):
     match = CELL_COLUMN_PATTERN.fullmatch(column)
@@ -78,59 +71,52 @@ def api_settings():
 
 @app.route("/api/data")
 def api_data():
-    df = load_all_logs()
-    if df.empty:
+    database = get_database()
+    database.import_csv_files(config.driver, find_log_files(config.driver))
+    first_ts, last_ts = database.get_bounds(config.driver)
+    if first_ts is None or last_ts is None:
         return jsonify({"empty": True})
 
-    # Aktuellster Echtzeit-Datensatz für die Live-Kacheln
-    latest = df.iloc[-1]
+    latest = database.get_latest(config.driver)
+    latest_timestamp = pd.to_datetime(latest["Zeitstempel"])
     latest_info = {
-        "zeit": latest["Zeitstempel"].strftime("%d.%m.%Y %H:%M:%S"),
+        "zeit": latest_timestamp.strftime("%d.%m.%Y %H:%M:%S"),
         "status": str(latest.get("Status", "-")),
         "spannung": float(latest.get("Spannung_V", 0)),
         "strom": float(latest.get("Strom_A", 0)),
         "leistung": float(latest.get("Leistung_W", 0)),
         "soc": float(latest.get("SOC_Prozent", 0)),
         "kapazitaet": float(latest.get("Restkapazitaet_Ah", 0)),
-        "temp": float(latest.get("Temp_C", 0)) if pd.notna(latest.get("Temp_C")) else 0,
-        "drift": float(latest.get("Drift_mV", 0)) if pd.notna(latest.get("Drift_mV")) else 0,
+        "temp": float(latest["Temp_C"]) if pd.notna(latest.get("Temp_C")) else 0,
+        "drift": float(latest["Drift_mV"]) if pd.notna(latest.get("Drift_mV")) else 0,
     }
 
-    # Zeitfilter (falls im Frontend gezoomt oder ein Zeitraum gewählt wurde)
     start_param = request.args.get("start")
     end_param = request.args.get("end")
+    query_start = first_ts
+    query_end = last_ts
     if start_param and end_param:
         t_min = pd.to_datetime(start_param, errors="coerce")
         t_max = pd.to_datetime(end_param, errors="coerce")
+        if pd.notna(t_min) and t_min.tzinfo is not None:
+            t_min = t_min.tz_convert(None)
+        if pd.notna(t_max) and t_max.tzinfo is not None:
+            t_max = t_max.tz_convert(None)
         if pd.notna(t_min) and pd.notna(t_max):
-            sub_df = df[(df["Zeitstempel"] >= t_min) & (df["Zeitstempel"] <= t_max)]
-            if len(sub_df) >= 2:
-                df = sub_df
+            if t_max >= t_min and database.count_readings(config.driver, t_min, t_max) >= 2:
+                query_start, query_end = t_min, t_max
 
-    # Dynamisches Downsampling anhand der sichtbaren Zeitspanne
-    span_days = max(0.01, (df["Zeitstempel"].max() - df["Zeitstempel"].min()).total_seconds() / 86400.0)
+    span_days = max(0.01, (query_end - query_start).total_seconds() / 86400.0)
+    bucket_seconds, res_label = resolution_for_span(span_days)
+    df = database.read_dataframe(
+        config.driver,
+        start=query_start,
+        end=query_end,
+        bucket_seconds=bucket_seconds,
+    )
+    if df.empty:
+        return jsonify({"empty": True})
 
-    if span_days <= 0.25:
-        rule, res_label = None, "1 Min (Original)"
-    elif span_days <= 3:
-        rule, res_label = "15min", "15 Min (Tagesansicht)"
-    elif span_days <= 21:
-        rule, res_label = "1h", "1 Std (Wochenansicht)"
-    elif span_days <= 120:
-        rule, res_label = "6h", "6 Std (Monatsansicht)"
-    else:
-        rule, res_label = "1D", "1 Tag (Jahresansicht)"
-
-    if rule:
-        df = (
-            df.set_index("Zeitstempel")
-            .resample(rule)
-            .mean(numeric_only=True)
-            .dropna(how="all")
-            .reset_index()
-        )
-
-    # NaN-Werte sauber für JSON ersetzen
     df = df.fillna(0)
     cell_columns = sorted(
         (column for column in df.columns if CELL_COLUMN_PATTERN.fullmatch(column)),

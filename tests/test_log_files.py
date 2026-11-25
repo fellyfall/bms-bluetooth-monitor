@@ -1,13 +1,13 @@
 import csv
-import os
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
 from bms_drivers.base import BatteryReading
+from database import BatteryDatabase
 from log_files import find_log_files
-from monitor import write_csv_log
 
 
 class LogFileTests(unittest.TestCase):
@@ -24,7 +24,7 @@ class LogFileTests(unittest.TestCase):
             )
             self.assertEqual(find_log_files("jbd"), ["battery_log_jbd_2026-11.csv"])
 
-    def test_csv_schema_includes_all_cell_voltages(self):
+    def test_database_and_csv_export_include_all_cell_voltages(self):
         reading = BatteryReading(
             status="RUHE",
             voltage_v=13.1,
@@ -39,14 +39,13 @@ class LogFileTests(unittest.TestCase):
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            old_cwd = os.getcwd()
-            try:
-                os.chdir(temp_dir)
-                log_path = write_csv_log(reading, "jbd")
-                with Path(log_path).open(encoding="utf-8", newline="") as file:
-                    headers = next(csv.reader(file, delimiter=";"))
-            finally:
-                os.chdir(old_cwd)
+            database = BatteryDatabase(Path(temp_dir) / "measurements.sqlite3")
+            database.insert_reading(
+                reading, "jbd", datetime(2026, 11, 25, 12, 0)
+            )
+            exported = database.export_csv_files("jbd", Path(temp_dir) / "export")
+            with exported[0].open(encoding="utf-8", newline="") as file:
+                headers = next(csv.reader(file, delimiter=";"))
 
         self.assertIn("Zelle6_V", headers)
 

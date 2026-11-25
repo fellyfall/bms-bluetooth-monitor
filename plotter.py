@@ -1,15 +1,18 @@
 import re
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.animation import FuncAnimation
 
 from bms_drivers import create_driver
 from config import load_config
-from log_files import find_log_files
+from database import BatteryDatabase, resolution_for_span
 
 config = load_config()
 create_driver(config.driver)
+database = BatteryDatabase()
+imported_rows = database.import_csv_files(config.driver)
+if imported_rows:
+    print(f"Imported {imported_rows} legacy CSV measurement(s) into {database.path}.")
 UPDATE_INTERVAL_MS = 10000
 CELL_COLUMN_PATTERN = re.compile(r"^Zelle(\d+)_V$")
 
@@ -21,55 +24,25 @@ status_banner = fig.suptitle(
     "Lade Log-Daten...", fontsize=11, fontweight="bold", color="#00e5ff"
 )
 
-def load_all_logs():
-    files = find_log_files(config.driver)
-    if not files:
-        return pd.DataFrame()
-    dfs = []
-    for f in files:
-        try:
-            temp_df = pd.read_csv(f, sep=";")
-            if not temp_df.empty:
-                dfs.append(temp_df)
-        except Exception:
-            pass
-    if not dfs:
-        return pd.DataFrame()
-    df = pd.concat(dfs, ignore_index=True)
-    df["Zeitstempel"] = pd.to_datetime(df["Zeitstempel"], errors="coerce")
-    df = df.dropna(subset=["Zeitstempel"]).sort_values("Zeitstempel").drop_duplicates("Zeitstempel")
-    return df
-
-def downsample_by_zoom(df, span_days):
+def date_format_for_span(span_days):
     if span_days <= 0.25:
-        return df, "1 Min (Original)", "%H:%M:%S"
-    elif span_days <= 3:
-        rule, label, fmt = "15min", "15 Min (Tagesansicht)", "%d.%m. %H:%M"
-    elif span_days <= 21:
-        rule, label, fmt = "1h", "1 Std (Wochenansicht)", "%d.%m. %Hh"
-    elif span_days <= 120:
-        rule, label, fmt = "6h", "6 Std (Monatsansicht)", "%d.%m.%Y"
-    else:
-        rule, label, fmt = "1D", "1 Tag (Jahresansicht)", "%b %Y"
-
-    df_resampled = (
-        df.set_index("Zeitstempel")
-        .resample(rule)
-        .mean(numeric_only=True)
-        .dropna(how="all")
-        .reset_index()
-    )
-    return df_resampled, label, fmt
+        return "%H:%M:%S"
+    if span_days <= 3:
+        return "%d.%m. %H:%M"
+    if span_days <= 21:
+        return "%d.%m. %Hh"
+    if span_days <= 120:
+        return "%d.%m.%Y"
+    return "%b %Y"
 
 def update(frame):
-    raw_df = load_all_logs()
-    if raw_df.empty:
-        status_banner.set_text("Warte auf Messdaten in 'battery_log*.csv'...")
+    latest = database.get_latest(config.driver)
+    first_ts, last_ts = database.get_bounds(config.driver)
+    if latest is None or first_ts is None or last_ts is None:
+        status_banner.set_text("Warte auf Messdaten in 'battery_monitor.sqlite3'...")
         return
 
-    latest = raw_df.iloc[-1]
-    first_ts = raw_df["Zeitstempel"].iloc[0]
-    last_ts = latest["Zeitstempel"]
+    last_ts = latest["Zeitstempel"].to_pydatetime()
 
     user_zoomed = fig.canvas.toolbar.mode != "" or getattr(update, "has_zoom", False)
     saved_xlim = axes[0].get_xlim() if user_zoomed else None
@@ -79,14 +52,24 @@ def update(frame):
         span_days = max(0.01, x_end - x_start)
         t_min = mdates.num2date(x_start).replace(tzinfo=None)
         t_max = mdates.num2date(x_end).replace(tzinfo=None)
-        visible_df = raw_df[(raw_df["Zeitstempel"] >= t_min) & (raw_df["Zeitstempel"] <= t_max)]
-        if len(visible_df) < 2:
-            visible_df = raw_df
+        if database.count_readings(config.driver, t_min, t_max) >= 2:
+            bucket_seconds, res_label = resolution_for_span(span_days)
+            df = database.read_dataframe(
+                config.driver, t_min, t_max, bucket_seconds=bucket_seconds
+            )
+        else:
+            span_days = max(0.01, (last_ts - first_ts).total_seconds() / 86400.0)
+            bucket_seconds, res_label = resolution_for_span(span_days)
+            df = database.read_dataframe(
+                config.driver, bucket_seconds=bucket_seconds
+            )
     else:
         span_days = max(0.01, (last_ts - first_ts).total_seconds() / 86400.0)
-        visible_df = raw_df
-
-    df, res_label, date_fmt = downsample_by_zoom(visible_df, span_days)
+        bucket_seconds, res_label = resolution_for_span(span_days)
+        df = database.read_dataframe(config.driver, bucket_seconds=bucket_seconds)
+    if df.empty:
+        return
+    date_fmt = date_format_for_span(span_days)
 
     for ax in axes:
         ax.clear()
