@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from config import load_config, save_address
+from config import load_config, load_languages, save_address
 
 
 class ConfigTests(unittest.TestCase):
@@ -93,8 +93,8 @@ class ConfigTests(unittest.TestCase):
 
         self.assertEqual(config.language, "es")
 
-    def test_loads_added_dashboard_languages(self):
-        for language in ("tlh", "la", "eo", "de-x-ruhrpott"):
+    def test_loads_every_registered_dashboard_language(self):
+        for language in load_languages():
             with self.subTest(language=language):
                 with tempfile.TemporaryDirectory() as temp_dir:
                     config_path = Path(temp_dir) / "config.toml"
@@ -108,7 +108,7 @@ class ConfigTests(unittest.TestCase):
     def test_rejects_unsupported_dashboard_language(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = Path(temp_dir) / "config.toml"
-            config_path.write_text('[bms]\nlanguage = "fr"\n', encoding="utf-8")
+            config_path.write_text('[bms]\nlanguage = "xx"\n', encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "bms.language"):
                 load_config(config_path)
 

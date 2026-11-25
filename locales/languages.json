@@ -34,5 +34,89 @@
   "de-x-ruhrpott": {
     "name": "Ruhrpottdeutsch (inoffiziell)",
     "locale": "de-DE"
+  },
+  "bg": {
+    "name": "Български",
+    "locale": "bg-BG"
+  },
+  "hr": {
+    "name": "Hrvatski",
+    "locale": "hr-HR"
+  },
+  "cs": {
+    "name": "Čeština",
+    "locale": "cs-CZ"
+  },
+  "da": {
+    "name": "Dansk",
+    "locale": "da-DK"
+  },
+  "nl": {
+    "name": "Nederlands",
+    "locale": "nl-NL"
+  },
+  "et": {
+    "name": "Eesti",
+    "locale": "et-EE"
+  },
+  "fi": {
+    "name": "Suomi",
+    "locale": "fi-FI"
+  },
+  "fr": {
+    "name": "Français",
+    "locale": "fr-FR"
+  },
+  "el": {
+    "name": "Ελληνικά",
+    "locale": "el-GR"
+  },
+  "hu": {
+    "name": "Magyar",
+    "locale": "hu-HU"
+  },
+  "ga": {
+    "name": "Gaeilge",
+    "locale": "ga-IE"
+  },
+  "it": {
+    "name": "Italiano",
+    "locale": "it-IT"
+  },
+  "lv": {
+    "name": "Latviešu",
+    "locale": "lv-LV"
+  },
+  "lt": {
+    "name": "Lietuvių",
+    "locale": "lt-LT"
+  },
+  "mt": {
+    "name": "Malti",
+    "locale": "mt-MT"
+  },
+  "pl": {
+    "name": "Polski",
+    "locale": "pl-PL"
+  },
+  "pt": {
+    "name": "Português",
+    "locale": "pt-PT"
+  },
+  "ro": {
+    "name": "Română",
+    "locale": "ro-RO"
+  },
+  "sk": {
+    "name": "Slovenčina",
+    "locale": "sk-SK"
+  },
+  "sl": {
+    "name": "Slovenščina",
+    "locale": "sl-SI"
+  },
+  "sv": {
+    "name": "Svenska",
+    "locale": "sv-SE"
   }
 }
