@@ -54,13 +54,7 @@
       <button onclick="setQuickRange(720)" id="btn-720">30 days</button>
       <button onclick="setQuickRange(0)" id="btn-0" class="active">All</button>
       <span class="badge" id="resBadge">Resolution: -</span>
-      <select id="languageSelect" aria-label="Language">
-        <option value="en">English</option>
-        <option value="de">Deutsch</option>
-        <option value="es">Español</option>
-        <option value="ru">Русский</option>
-        <option value="zh-CN">简体中文</option>
-      </select>
+      <select id="languageSelect" aria-label="Language"></select>
     </div>
   </header>
 
@@ -84,220 +78,18 @@
     let initialized = false;
     let currentLanguage = "en";
 
-    const translations = {
-      en: {
-        documentTitle: "BMS Bluetooth Monitor",
-        pageTitle: "BMS Bluetooth — Web Monitor",
-        language: "Language",
-        connecting: "Connecting to dashboard...",
-        lastMeasurement: "Last measurement: {time} (refreshes every 10 s)",
-        noData: "No measurement data found.",
-        range6: "6 hours",
-        range24: "24 hours",
-        range7Days: "7 days",
-        range30Days: "30 days",
-        rangeAll: "All",
-        resolutionLabel: "Resolution: {value}",
-        resolutionOriginal: "1 min (original)",
-        resolutionDay: "15 min (day view)",
-        resolutionWeek: "1 hour (week view)",
-        resolutionMonth: "6 hours (month view)",
-        resolutionYear: "1 day (year view)",
-        resolutionUnknown: "-",
-        status: "Status",
-        soc: "State of charge (SOC)",
-        voltage: "Voltage",
-        power: "Current / power",
-        drift: "Cell drift",
-        eta: "Temperature / ETA",
-        remainingCapacity: "Remaining capacity (Ah)",
-        capacityAxis: "Capacity (Ah)",
-        totalVoltage: "Total voltage (V)",
-        voltageAxis: "Voltage (V)",
-        powerSeries: "Power (W)",
-        powerAxis: "Power (W)",
-        cellVoltage: "Cell voltage (V)",
-        cell: "Cell",
-        charging: "Charging",
-        discharging: "Discharging",
-        idle: "Idle",
-        remainingEta: "~{hours} h remaining",
-        fullEta: "Full in ~{hours} h"
-      },
-      de: {
-        documentTitle: "BMS Bluetooth Monitor",
-        pageTitle: "BMS Bluetooth — Webmonitor",
-        language: "Sprache",
-        connecting: "Verbindung zum Dashboard wird hergestellt...",
-        lastMeasurement: "Letzte Messung: {time} (Aktualisierung alle 10 s)",
-        noData: "Keine Messdaten gefunden.",
-        range6: "6 Std.",
-        range24: "24 Std.",
-        range7Days: "7 Tage",
-        range30Days: "30 Tage",
-        rangeAll: "Gesamt",
-        resolutionLabel: "Auflösung: {value}",
-        resolutionOriginal: "1 Min. (Original)",
-        resolutionDay: "15 Min. (Tagesansicht)",
-        resolutionWeek: "1 Std. (Wochenansicht)",
-        resolutionMonth: "6 Std. (Monatsansicht)",
-        resolutionYear: "1 Tag (Jahresansicht)",
-        resolutionUnknown: "-",
-        status: "Status",
-        soc: "Ladezustand (SOC)",
-        voltage: "Spannung",
-        power: "Strom / Leistung",
-        drift: "Zelldrift",
-        eta: "Temperatur / Restzeit",
-        remainingCapacity: "Restkapazität (Ah)",
-        capacityAxis: "Kapazität (Ah)",
-        totalVoltage: "Gesamtspannung (V)",
-        voltageAxis: "Spannung (V)",
-        powerSeries: "Leistung (W)",
-        powerAxis: "Leistung (W)",
-        cellVoltage: "Zellspannung (V)",
-        cell: "Zelle",
-        charging: "Lädt",
-        discharging: "Entlädt",
-        idle: "Ruhe",
-        remainingEta: "Noch ca. {hours} h",
-        fullEta: "Voll in ca. {hours} h"
-      },
-      es: {
-        documentTitle: "Monitor Bluetooth BMS",
-        pageTitle: "BMS Bluetooth — Monitor web",
-        language: "Idioma",
-        connecting: "Conectando al panel...",
-        lastMeasurement: "Última medición: {time} (actualización cada 10 s)",
-        noData: "No se encontraron datos de medición.",
-        range6: "6 horas",
-        range24: "24 horas",
-        range7Days: "7 días",
-        range30Days: "30 días",
-        rangeAll: "Todo",
-        resolutionLabel: "Resolución: {value}",
-        resolutionOriginal: "1 min (original)",
-        resolutionDay: "15 min (vista diaria)",
-        resolutionWeek: "1 h (vista semanal)",
-        resolutionMonth: "6 h (vista mensual)",
-        resolutionYear: "1 día (vista anual)",
-        resolutionUnknown: "-",
-        status: "Estado",
-        soc: "Estado de carga (SOC)",
-        voltage: "Voltaje",
-        power: "Corriente / potencia",
-        drift: "Diferencia entre celdas",
-        eta: "Temperatura / tiempo restante",
-        remainingCapacity: "Capacidad restante (Ah)",
-        capacityAxis: "Capacidad (Ah)",
-        totalVoltage: "Voltaje total (V)",
-        voltageAxis: "Voltaje (V)",
-        powerSeries: "Potencia (W)",
-        powerAxis: "Potencia (W)",
-        cellVoltage: "Voltaje de celda (V)",
-        cell: "Celda",
-        charging: "Cargando",
-        discharging: "Descargando",
-        idle: "En reposo",
-        remainingEta: "~{hours} h restantes",
-        fullEta: "Carga completa en ~{hours} h"
-      },
-      ru: {
-        documentTitle: "Монитор Bluetooth BMS",
-        pageTitle: "BMS Bluetooth — веб-монитор",
-        language: "Язык",
-        connecting: "Подключение к панели...",
-        lastMeasurement: "Последнее измерение: {time} (обновление каждые 10 с)",
-        noData: "Данные измерений не найдены.",
-        range6: "6 часов",
-        range24: "24 часа",
-        range7Days: "7 дней",
-        range30Days: "30 дней",
-        rangeAll: "Всё время",
-        resolutionLabel: "Интервал: {value}",
-        resolutionOriginal: "1 мин (исходные данные)",
-        resolutionDay: "15 мин (за день)",
-        resolutionWeek: "1 ч (за неделю)",
-        resolutionMonth: "6 ч (за месяц)",
-        resolutionYear: "1 день (за год)",
-        resolutionUnknown: "-",
-        status: "Статус",
-        soc: "Уровень заряда (SOC)",
-        voltage: "Напряжение",
-        power: "Ток / мощность",
-        drift: "Разброс напряжения ячеек",
-        eta: "Температура / время",
-        remainingCapacity: "Оставшаяся ёмкость (А·ч)",
-        capacityAxis: "Ёмкость (А·ч)",
-        totalVoltage: "Общее напряжение (В)",
-        voltageAxis: "Напряжение (В)",
-        powerSeries: "Мощность (Вт)",
-        powerAxis: "Мощность (Вт)",
-        cellVoltage: "Напряжение ячеек (В)",
-        cell: "Ячейка",
-        charging: "Заряд",
-        discharging: "Разряд",
-        idle: "Покой",
-        remainingEta: "Осталось ~{hours} ч",
-        fullEta: "До полного заряда ~{hours} ч"
-      },
-      "zh-CN": {
-        documentTitle: "BMS 蓝牙监控",
-        pageTitle: "BMS 蓝牙 — 网页监控",
-        language: "语言",
-        connecting: "正在连接仪表板...",
-        lastMeasurement: "最近测量：{time}（每 10 秒刷新）",
-        noData: "未找到测量数据。",
-        range6: "6 小时",
-        range24: "24 小时",
-        range7Days: "7 天",
-        range30Days: "30 天",
-        rangeAll: "全部",
-        resolutionLabel: "分辨率：{value}",
-        resolutionOriginal: "1 分钟（原始数据）",
-        resolutionDay: "15 分钟（按天）",
-        resolutionWeek: "1 小时（按周）",
-        resolutionMonth: "6 小时（按月）",
-        resolutionYear: "1 天（按年）",
-        resolutionUnknown: "-",
-        status: "状态",
-        soc: "电量状态（SOC）",
-        voltage: "电压",
-        power: "电流 / 功率",
-        drift: "电芯压差",
-        eta: "温度 / 预计时间",
-        remainingCapacity: "剩余容量（Ah）",
-        capacityAxis: "容量（Ah）",
-        totalVoltage: "总电压（V）",
-        voltageAxis: "电压（V）",
-        powerSeries: "功率（W）",
-        powerAxis: "功率（W）",
-        cellVoltage: "电芯电压（V）",
-        cell: "电芯",
-        charging: "充电中",
-        discharging: "放电中",
-        idle: "静置",
-        remainingEta: "剩余约 {hours} 小时",
-        fullEta: "约 {hours} 小时后充满"
-      }
-    };
-
-    const languageLocales = {
-      en: "en-US",
-      de: "de-DE",
-      es: "es-ES",
-      ru: "ru-RU",
-      "zh-CN": "zh-CN"
-    };
-
+    let languages = {};
+    let translations = {};
     const languageSelect = document.getElementById("languageSelect");
 
     function translate(key) {
-      return translations[currentLanguage][key] || translations.en[key];
+      const message = translations[currentLanguage]?.[key] || translations.en?.[key];
+      if (!message) throw new Error(`Missing translation key: ${key}`);
+      return message;
     }
 
     function applyLanguage(language) {
-      if (!Object.prototype.hasOwnProperty.call(translations, language)) {
+      if (!Object.prototype.hasOwnProperty.call(languages, language)) {
         throw new Error(`Unsupported dashboard language: ${language}`);
       }
       currentLanguage = language;
@@ -327,12 +119,25 @@
         translate("resolutionLabel").replace("{value}", translate("resolutionUnknown"));
     }
 
+    async function loadTranslation(language) {
+      if (!Object.prototype.hasOwnProperty.call(languages, language)) {
+        throw new Error(`Unsupported dashboard language: ${language}`);
+      }
+      if (!translations[language]) {
+        const response = await fetch(`/locales/${encodeURIComponent(language)}.json`);
+        if (!response.ok) {
+          throw new Error(`Could not load ${language} translations: ${response.status}`);
+        }
+        translations[language] = await response.json();
+      }
+    }
+
     function formatTimestamp(value) {
       const match = /^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/.exec(value);
       if (!match) return value;
       const [, day, month, year, hour, minute, second] = match;
       const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-      return new Intl.DateTimeFormat(languageLocales[currentLanguage], {
+      return new Intl.DateTimeFormat(languages[currentLanguage].locale, {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -468,19 +273,29 @@
         throw new Error(`Could not load dashboard settings: ${response.status}`);
       }
       const settings = await response.json();
+      languages = settings.languages;
+      Object.entries(languages).forEach(([code, details]) => {
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = details.name;
+        languageSelect.append(option);
+      });
+
       const savedLanguage = localStorage.getItem("bms-dashboard-language");
-      const initialLanguage = Object.prototype.hasOwnProperty.call(translations, savedLanguage)
+      const initialLanguage = Object.prototype.hasOwnProperty.call(languages, savedLanguage)
         ? savedLanguage
-        : Object.prototype.hasOwnProperty.call(translations, settings.default_language)
+        : Object.prototype.hasOwnProperty.call(languages, settings.default_language)
           ? settings.default_language
           : "en";
 
+      await loadTranslation(initialLanguage);
       languageSelect.value = initialLanguage;
       applyLanguage(initialLanguage);
-      languageSelect.addEventListener("change", () => {
+      languageSelect.addEventListener("change", async () => {
+        await loadTranslation(languageSelect.value);
         localStorage.setItem("bms-dashboard-language", languageSelect.value);
         applyLanguage(languageSelect.value);
-        fetchAndRender();
+        await fetchAndRender();
       });
 
       await fetchAndRender();

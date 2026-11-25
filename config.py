@@ -1,3 +1,4 @@
+import json
 import os
 import tomllib
 from dataclasses import dataclass
@@ -5,7 +6,7 @@ from pathlib import Path
 
 
 DEFAULT_CONFIG_PATH = Path(__file__).with_name("config.toml")
-SUPPORTED_LANGUAGES = {"en", "de", "es", "ru", "zh-CN"}
+LANGUAGE_REGISTRY_PATH = Path(__file__).with_name("locales") / "languages.json"
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,30 @@ class MonitorConfig:
     address: str | None
     interval_seconds: int
     language: str
+
+
+def load_languages() -> dict[str, dict[str, str]]:
+    try:
+        languages = json.loads(LANGUAGE_REGISTRY_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"Unable to load language registry: {error}") from error
+
+    if not isinstance(languages, dict) or not languages:
+        raise ValueError("The language registry must contain at least one language.")
+    if "en" not in languages:
+        raise ValueError("The language registry must include English (en) as a fallback.")
+    for code, details in languages.items():
+        if (
+            not isinstance(code, str)
+            or not code
+            or not isinstance(details, dict)
+            or not isinstance(details.get("name"), str)
+            or not details["name"].strip()
+            or not isinstance(details.get("locale"), str)
+            or not details["locale"].strip()
+        ):
+            raise ValueError("Each language registry entry needs a code, name, and locale.")
+    return languages
 
 
 def load_config(path: Path = DEFAULT_CONFIG_PATH) -> MonitorConfig:
@@ -41,10 +66,11 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> MonitorConfig:
     ):
         raise ValueError("bms.interval_seconds must be a positive integer.")
 
+    languages = load_languages()
     language = bms_config.get("language", "en")
-    if not isinstance(language, str) or language not in SUPPORTED_LANGUAGES:
+    if not isinstance(language, str) or language not in languages:
         raise ValueError(
-            "bms.language must be one of: " + ", ".join(sorted(SUPPORTED_LANGUAGES))
+            "bms.language must be one of: " + ", ".join(sorted(languages))
         )
 
     address = os.environ.get("BATTERY_ADDRESS") or bms_config.get("address")

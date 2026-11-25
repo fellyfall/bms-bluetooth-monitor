@@ -42,6 +42,8 @@ Replace the example address with your BMS Bluetooth address. On Windows, copy th
 
 The dashboard supports English (`en`), German (`de`), Spanish (`es`), Russian (`ru`), and Simplified Chinese (`zh-CN`). `bms.language` sets the default language; English is used by default. A visitor's selection is remembered in that browser and does not change the server configuration.
 
+To add a language, copy `locales/en.json` to a new file such as `locales/fr.json` and translate its values without changing the keys or placeholders. Then add the language code, display name, and locale to `locales/languages.json`. The dashboard loads translations from these files; no dashboard logic changes are needed. The test suite checks that every language file contains the same keys as English.
+
 To add another BMS, implement the `BmsDriver` interface in a new module under `bms_drivers/` and register it in `bms_drivers/__init__.py`. Implement `initialize(client)` for BLE setup and `read(client)` to return the shared `BatteryReading` model, including its cell-voltage list. The logger, API, web chart, and desktop plotter handle a variable number of cells. At present, only the ECO-WORTHY driver is implemented and hardware-tested; a new driver still needs protocol details and testing with the target BMS.
 
 ## Install and run

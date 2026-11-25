@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from config import load_languages
 from server_dashboard import app, config
 
 
@@ -14,8 +15,19 @@ class DashboardApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.get_json(),
-            {"default_language": config.language},
+            {
+                "default_language": config.language,
+                "languages": load_languages(),
+            },
         )
+        self.assertIn("en", response.get_json()["languages"])
+
+    def test_locale_translation_file_is_served(self):
+        response = app.test_client().get("/locales/de.json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["status"], "Status")
+        response.close()
 
     def test_api_returns_a_series_for_each_cell_column(self):
         headers = [

@@ -4,7 +4,7 @@ import pandas as pd
 from flask import Flask, jsonify, request, send_from_directory
 
 from bms_drivers import create_driver
-from config import load_config
+from config import load_config, load_languages
 from log_files import find_log_files
 
 app = Flask(__name__)
@@ -45,7 +45,10 @@ def static_files(filename):
 
 @app.route("/api/settings")
 def api_settings():
-    return jsonify({"default_language": config.language})
+    return jsonify({
+        "default_language": config.language,
+        "languages": load_languages(),
+    })
 
 @app.route("/api/data")
 def api_data():
