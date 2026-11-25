@@ -58,7 +58,7 @@ Version **v0.1** marks the initial consolidated release of the **LiFePO4 BLE Bat
 | `battery-dashboard.service` | systemd Unit | ❌ | ✅ | 24/7 Server Autostart Service |
 | `requirements.txt` | Python Dependencies | ✅ | ✅ | Required Python packages |
 | `LICENSE` | GPL-3.0 | ✅ | ✅ | Project license |
-| `info.md` / `setup_linux.md` | Documentation | ✅ | ✅ | Project and setup guides |
+| `README.md` / `setup_linux.md` | Documentation | ✅ | ✅ | Project and setup guides |
 
 ---
 
