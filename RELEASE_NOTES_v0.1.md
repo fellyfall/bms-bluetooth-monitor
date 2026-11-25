@@ -56,16 +56,17 @@ Version **v0.1** marks the initial consolidated release of the **LiFePO4 BLE Bat
 | `start.sh` | Shell Script | ❌ | ✅ | Linux One-Click Starter |
 | `battery-monitor.service` | systemd Unit | ❌ | ✅ | 24/7 Logger Autostart Service |
 | `battery-dashboard.service` | systemd Unit | ❌ | ✅ | 24/7 Server Autostart Service |
-| `pack_release.py` | Python Script | ✅ | ✅ | Automated Release Packager |
-| `info.md` / `README.md` | Documentation | ✅ | ✅ | Project Documentation & Setup Guide |
+| `requirements.txt` | Python Dependencies | ✅ | ✅ | Required Python packages |
+| `LICENSE` | GPL-3.0 | ✅ | ✅ | Project license |
+| `info.md` / `setup_linux.md` | Documentation | ✅ | ✅ | Project and setup guides |
 
 ---
 
-## 🛠️ Automated Packaging Script (`pack_release.py`)
-Starting with v0.1, the project includes `pack_release.py`, a helper script to build release ZIP packages for future versions (e.g. `python pack_release.py v0.2`).
+## 📦 Release archive
+
+The release archive contains the application source, dashboard assets, setup guides, and GPL-3.0 license. Battery measurement logs and device-specific Bluetooth addresses are not included.
 
 ---
 
 ## 🤝 Open Source & Contributions
-- Licensed under the **MIT License**.
-- Contribution guidelines available in `CONTRIBUTING.md`.
+- Licensed under the **GNU General Public License v3.0 (GPL-3.0)**.
