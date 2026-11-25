@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ECO-WORTHY 100Ah Live-Monitor</title>
+  <script src="/plotly.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --card: #181b24;
+      --border: #2a2f3d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --cyan: #00e5ff;
+      --yellow: #ffd54f;
+      --red: #ff5252;
+      --green: #69f0ae;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+    h1 { font-size: 1.25rem; color: var(--cyan); }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button {
+      background: var(--card); color: var(--text); border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    }
+    button:hover { border-color: var(--cyan); color: var(--cyan); }
+    button.active { background: #00e5ff22; border-color: var(--cyan); color: var(--cyan); }
+    .badge { font-size: 0.8rem; color: var(--muted); background: var(--card); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .kpi-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .kpi-val { font-size: 1.3rem; font-weight: 700; }
+    .chart-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>ECO-WORTHY 100Ah &mdash; Web-Monitor</h1>
+      <div id="lastUpdate" style="font-size:0.8rem; color:var(--muted);">Verbinde mit Backend...</div>
+    </div>
+    <div class="controls">
+      <button onclick="setQuickRange(6)" id="btn-6">6 Std</button>
+      <button onclick="setQuickRange(24)" id="btn-24">24 Std</button>
+      <button onclick="setQuickRange(168)" id="btn-168">7 Tage</button>
+      <button onclick="setQuickRange(720)" id="btn-720">30 Tage</button>
+      <button onclick="setQuickRange(0)" id="btn-0" class="active">Gesamt</button>
+      <span class="badge" id="resBadge">Raster: -</span>
+    </div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-label">Status</div><div class="kpi-val" id="kStatus">-</div></div>
+    <div class="kpi"><div class="kpi-label">Ladezustand (SOC)</div><div class="kpi-val" style="color:var(--cyan)" id="kSoc">-</div></div>
+    <div class="kpi"><div class="kpi-label">Spannung</div><div class="kpi-val" style="color:var(--yellow)" id="kVolt">-</div></div>
+    <div class="kpi"><div class="kpi-label">Strom / Leistung</div><div class="kpi-val" style="color:var(--red)" id="kPower">-</div></div>
+    <div class="kpi"><div class="kpi-label">Zelldrift</div><div class="kpi-val" style="color:var(--green)" id="kDrift">-</div></div>
+    <div class="kpi"><div class="kpi-label">Temperatur / ETA</div><div class="kpi-val" id="kEta">-</div></div>
+  </div>
+
+  <div class="chart-box"><div id="chartCap" style="height:210px;"></div></div>
+  <div class="chart-box"><div id="chartVolt" style="height:210px;"></div></div>
+  <div class="chart-box"><div id="chartPower" style="height:210px;"></div></div>
+  <div class="chart-box"><div id="chartCells" style="height:230px;"></div></div>
+
+  <script>
+    let customStart = null;
+    let customEnd = null;
+    let initialized = false;
+
+    const baseLayout = (yTitle) => ({
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      font: { color: "#e6edf3", size: 11 },
+      margin: { l: 55, r: 20, t: 12, b: 30 },
+      xaxis: { gridcolor: "#2a2f3d", zeroline: false },
+      yaxis: { title: yTitle, gridcolor: "#2a2f3d", zeroline: false },
+      hovermode: "x unified",
+      legend: { orientation: "h", y: 1.15, x: 0 }
+    });
+
+    const plotConfig = { responsive: true, scrollZoom: true, displaylogo: false };
+
+    function setQuickRange(hours) {
+      document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+      document.getElementById("btn-" + hours).classList.add("active");
+      if (hours === 0) {
+        customStart = null;
+        customEnd = null;
+      } else {
+        const now = new Date();
+        const past = new Date(now.getTime() - hours * 3600 * 1000);
+        customStart = past.toISOString().slice(0, 19).replace("T", " ");
+        customEnd = now.toISOString().slice(0, 19).replace("T", " ");
+      }
+      fetchAndRender();
+    }
+
+    async function fetchAndRender() {
+      let url = "/api/data";
+      if (customStart && customEnd) {
+        url += `?start=${encodeURIComponent(customStart)}&end=${encodeURIComponent(customEnd)}`;
+      }
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.empty) return;
+
+      const L = data.latest;
+      document.getElementById("lastUpdate").textContent = `Letzte Messung: ${L.zeit} (Auto-Update alle 10s)`;
+      document.getElementById("resBadge").textContent = `Raster: ${data.resolution}`;
+      document.getElementById("kStatus").textContent = L.status;
+      document.getElementById("kSoc").textContent = `${L.soc}% (${L.kapazitaet.toFixed(1)} Ah)`;
+      document.getElementById("kVolt").textContent = `${L.spannung.toFixed(2)} V`;
+      document.getElementById("kPower").textContent = `${L.strom >= 0 ? "+" : ""}${L.strom.toFixed(2)} A (${L.leistung.toFixed(0)} W)`;
+      document.getElementById("kDrift").textContent = `${L.drift.toFixed(0)} mV`;
+
+      let eta = "Ruhe";
+      if (L.strom < -0.1) eta = `~${(L.kapazitaet / Math.abs(L.strom)).toFixed(1)} h`;
+      else if (L.strom > 0.1) eta = `Voll ~${(Math.max(0, 100 - L.kapazitaet) / L.strom).toFixed(1)} h`;
+      document.getElementById("kEta").textContent = `${L.temp}°C | ${eta}`;
+
+      const t = data.timestamps;
+
+      Plotly.react("chartCap", [{ x: t, y: data.kapazitaet, name: "Restkapazität (Ah)", line: { color: "#00e5ff", width: 2 } }], baseLayout("Kapazität (Ah)"), plotConfig);
+      Plotly.react("chartVolt", [{ x: t, y: data.spannung, name: "Gesamtspannung (V)", line: { color: "#ffd54f", width: 2 } }], baseLayout("Spannung (V)"), plotConfig);
+      Plotly.react("chartPower", [{ x: t, y: data.leistung, name: "Leistung (W)", line: { color: "#ff5252", width: 2 } }], baseLayout("Leistung (W)"), plotConfig);
+      Plotly.react("chartCells", [
+        { x: t, y: data.z1, name: "Zelle 1", line: { color: "#69f0ae", width: 1.5 } },
+        { x: t, y: data.z2, name: "Zelle 2", line: { color: "#40c4ff", width: 1.5 } },
+        { x: t, y: data.z3, name: "Zelle 3", line: { color: "#ea80fc", width: 1.5 } },
+        { x: t, y: data.z4, name: "Zelle 4", line: { color: "#ffab40", width: 1.5 } }
+      ], baseLayout("Zellen (V)"), plotConfig);
+
+      // Zoom/Pan-Synchronisation zwischen allen 4 Diagrammen + dynamisches Nachladen
+      if (!initialized) {
+        initialized = true;
+        const ids = ["chartCap", "chartVolt", "chartPower", "chartCells"];
+        ids.forEach(id => {
+          document.getElementById(id).on("plotly_relayout", (ev) => {
+            if (ev["xaxis.autorange"]) {
+              setQuickRange(0);
+              return;
+            }
+           if (ev["xaxis.range"] && ev["xaxis.range"].length === 2) {
+  customStart = ev["xaxis.range"].at(0).slice(0, 19);
+  customEnd = ev["xaxis.range"].at(1).slice(0, 19);
+  document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+  fetchAndRender();
+}
+
+          });
+        });
+      }
+    }
+
+    fetchAndRender();
+    setInterval(fetchAndRender, 10000);
+  </script>
+</body>
+</html>

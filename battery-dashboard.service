@@ -1,0 +1,14 @@
+[Unit]
+Description=ECO-WORTHY Battery Web Dashboard Service
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/battery-monitor
+ExecStart=/usr/bin/python3 /home/pi/battery-monitor/server_dashboard.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

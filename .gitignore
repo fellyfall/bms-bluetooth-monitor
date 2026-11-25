@@ -1,0 +1,8 @@
+.env
+.env.*
+__pycache__/
+.venv/
+venv/
+*.log
+battery_log*.csv
+lifepo4-bms-monitor-v*.zip

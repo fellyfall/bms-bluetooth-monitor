@@ -1,0 +1,16 @@
+[Unit]
+Description=ECO-WORTHY BLE Battery Monitor Service
+After=bluetooth.target network.target
+Wants=bluetooth.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/battery-monitor
+EnvironmentFile=/etc/default/battery-monitor
+ExecStart=/usr/bin/python3 /home/pi/battery-monitor/monitor.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
