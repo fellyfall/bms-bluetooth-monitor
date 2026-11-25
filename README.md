@@ -2,7 +2,7 @@
 
 A Bluetooth Low Energy (BLE) logger and dashboard for monitoring LiFePO4 battery management systems (BMS). The project reads battery telemetry, stores it locally as CSV, and presents it in either a web dashboard or a desktop plotting window.
 
-The project is designed for an ECO-WORTHY 100 Ah LiFePO4 battery with a Bluetooth BMS. Other BMS models may use a different BLE protocol and are not guaranteed to work without code changes.
+The scripts have only been tested with an ECO-WORTHY 100 Ah LiFePO4 battery and its Bluetooth BMS. Other BMS models may use a different BLE protocol; they have not been tested and may require code changes.
 
 ## Features
 
